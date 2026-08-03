@@ -1,12 +1,13 @@
 # Báo Cáo Nhóm — Lab 7: Embedding & Vector Store
 
-**Nhóm:** Nhóm A2
+**Nhóm:** Nhóm A2 <br>
 **Thành viên:** 
-1. Nguyễn Thị Thanh Hiền - 2A202601150
-2. Nguyễn Công Việt Quang - 2A202601586
+1. Nguyễn Công Việt Quang - 2A202601586
+2. Nguyễn Thị Thanh Hiền - 2A202601150
 3. Đỗ Thành Đạt - 2A202601278
 4. Trần Thị Hường - 2A202601648
-5. Nguyễn Thành Công - 2A202601396
+5. Nguyễn Thành Công - 2A202601396 
+
 **Ngày:** 03/08/2026
 
 > **Nộp 1 bản / nhóm.** Phần cá nhân (hướng tiếp cận, kết quả riêng, dự đoán…) mỗi thành viên nộp riêng trong `REPORT_CANHAN.md`. Chi tiết thang điểm: `docs/SCORING.md`.
@@ -33,22 +34,16 @@
 | 3 | Chính sách trả hàng và hoàn tiền | https://help.shopee.vn/portal/4/article/77251?seo=1 | 2026-08-03 / 2026-03-11 | 19.656 | Như trên; `customer_role=both` |
 | 4 | Quy trình Shopee xử lý yêu cầu trả hàng hoàn tiền | https://help.shopee.vn/portal/4/article/190242 | 2026-08-03 / không nêu | 8.180 | Như trên; `customer_role=buyer` |
 | 5 | Các phương thức gửi hàng hoàn trả và phí hoàn trả | https://help.shopee.vn/portal/4/article/189477 | 2026-08-03 / không nêu | 5.910 | Như trên; `customer_role=buyer` |
-| 6 | Hướng dẫn gửi yêu cầu trả hàng hoàn tiền | https://help.shopee.vn/portal/4/article/79233?seo=1 | 2026-08-03 / không nêu | 2.404 | Như trên; `customer_role=buyer` |
-| 7 | Điều khoản dịch vụ Shopee | https://help.shopee.vn/portal/4/article/77243 | 2026-08-03 / 2026-05-01 | 83.902 | Như trên; `customer_role=both` |
 
 **Danh sách kiểm tra quản trị dữ liệu (Data governance checklist):**
-- [x] Tập tài liệu (Corpus) chỉ chứa 7 trang trợ giúp công khai của Shopee, không chứa dữ liệu cá nhân, thông tin đăng nhập hoặc tài liệu nội bộ.
-- [x] Mỗi tài liệu có `source_url`, `retrieved_at`, `document_version` (hoặc giá trị `not-stated`) trong metadata.
+- [x] Tập tài liệu (Corpus) chỉ chứa nguồn công khai/được phép dùng và không chứa dữ liệu cá nhân, thông tin đăng nhập hoặc tài liệu nội bộ.
+- [x] Mỗi tài liệu có `source_url`, `retrieved_at`, `document_version` (hoặc ngày hiệu lực) trong metadata.
 
 ### Cấu trúc Metadata (Metadata Schema)
 
 | Trường metadata | Kiểu | Ví dụ giá trị | Tại sao hữu ích cho truy xuất (retrieval)? |
 |----------------|------|---------------|-------------------------------|
 | `doc_id` | string | `shopee-return-refund-policy` | Xác định tài liệu chuẩn và chấm hit theo từng câu hỏi. |
-| `title` | string | `Chính sách trả hàng và hoàn tiền` | Hiển thị nguồn dễ đọc trong kết quả. |
-| `source_url` | URL/string | `https://help.shopee.vn/...` | Truy vết và kiểm chứng nội dung gốc. |
-| `retrieved_at` | date/string | `2026-08-03` | Theo dõi thời điểm thu thập, hỗ trợ cập nhật corpus. |
-| `document_version` | date/string | `2026-03-11` | Phân biệt phiên bản chính sách và ưu tiên dữ liệu phù hợp. |
 | `customer_role` | enum | `buyer`, `seller`, `both` | Lọc đúng ngữ cảnh người mua/người bán, giảm kết quả nhiễu. |
 
 ---
@@ -63,48 +58,50 @@ Chạy `ChunkingStrategyComparator().compare()` trên 2-3 tài liệu:
 
 | Tài liệu | Chiến lược (Strategy) | Số lượng Chunk | Độ dài trung bình | Giữ được ngữ cảnh không? |
 |-----------|----------|-------------|------------|-------------------|
-| shopee-product-listing-rules | FixedSizeChunker (`fixed_size`, 200) | 107 | 199,62 | Trung bình; có thể cắt giữa điều/khoản |
+| shopee-product-listing-rules | FixedSizeChunker (`fixed_size`) | 107 | 199,62 | Trung bình; có thể cắt giữa điều/khoản |
 | shopee-product-listing-rules | SentenceChunker (`by_sentences`) | 77 | 274,69 | Khá tốt với văn xuôi, nhưng danh sách dài dễ dồn chung |
-| shopee-product-listing-rules | RecursiveChunker (`recursive`, 200) | 154 | 136,73 | Tốt hơn ở ranh giới đoạn/dòng, nhiều chunk ngắn |
-| shopee-return-refund-policy | FixedSizeChunker (`fixed_size`, 200) | 98 | 198,42 | Trung bình; có thể tách số liệu khỏi ngoại lệ |
-| shopee-return-refund-policy | SentenceChunker (`by_sentences`) | 42 | 460,24 | Giữ trọn câu nhưng có chunk vượt xa 200 ký tự |
-| shopee-return-refund-policy | RecursiveChunker (`recursive`, 200) | 162 | 118,36 | Giữ ranh giới đoạn tốt, đổi lại phân mảnh cao |
-| shopee-return-shipping-fees | FixedSizeChunker (`fixed_size`, 200) | 29 | 199,45 | Trung bình; bảng/quy trình có thể bị cắt ngang |
-| shopee-return-shipping-fees | SentenceChunker (`by_sentences`) | 9 | 640,11 | Quá thô vì nhiều dòng hướng dẫn không kết thúc bằng dấu câu |
-| shopee-return-shipping-fees | RecursiveChunker (`recursive`, 200) | 41 | 138,93 | Phù hợp hơn với các dòng bước và tiểu mục |
-
-Các số liệu trên được chạy trên **phần thân đã bỏ YAML front matter** bằng `load_documents()` rồi mới truyền vào `ChunkingStrategyComparator().compare()`, nên không đo lẫn metadata đầu file.
+| shopee-product-listing-rules | RecursiveChunker (`recursive`) | 154 | 136,73 | Tốt hơn ở ranh giới đoạn/dòng, nhiều chunk ngắn |
 
 ### Chiến lược của từng thành viên
 
-Các lần chạy trong `artifacts/` đại diện cho năm cấu hình được so sánh trên cùng corpus và cùng mô hình embedding `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`:
+> Mỗi thành viên điền một khối dưới đây (copy thêm nếu nhóm có nhiều hơn 3 người).
 
-| Cấu hình | Tham số | Số tài liệu | Số chunk | Độ dài TB | Hit@3 | Điểm |
-|---|---|---:|---:|---:|---:|---:|
-| Fixed-small | `chunk_size=400`, `overlap=50` | 7 | 439 | 397,10 | 5/5 | 10/10 |
-| Fixed-large | `chunk_size=800`, `overlap=120` | 7 | 228 | 786,18 | 5/5 | 10/10 |
-| Sentence-4 | `max_sentences_per_chunk=4` | 7 | 263 | 577,49 | 5/5 | 10/10 |
-| Recursive-700 | `chunk_size=700` | 7 | 298 | 510,39 | 5/5 | 10/10 |
-| Policy-section | `max_chunk_size=700` | 7 | 553 | 293,12 | 5/5 | 10/10 |
+**Thành viên 1 — Nguyễn Công Việt Quang**
+- **Loại chiến lược:** FixedSize (Fixed-small)
+- **Mô tả & lý do chọn cho chủ đề này:** Dùng `chunk_size=400`, `overlap=50`. Kích thước nhỏ giúp truy xuất chính xác các quy định ngắn; overlap hạn chế mất ngữ cảnh tại ranh giới chunk.
 
-- **Fixed-small:** `chunk_size=400`, `overlap=50`. Kích thước nhỏ giúp truy xuất chính xác các quy định ngắn; overlap hạn chế mất ngữ cảnh tại ranh giới chunk.
-- **Fixed-large:** `chunk_size=800`, `overlap=120`. Chunk lớn giữ nhiều bối cảnh nhưng dễ đưa thêm nội dung không liên quan, làm giảm thứ hạng tài liệu đúng.
-- **Sentence-4:** tối đa 4 câu/chunk. Cách này ưu tiên ranh giới ngôn ngữ tự nhiên và cho kết quả top-1 ổn định trên cả 5 câu hỏi.
-- **Recursive-700:** `chunk_size=700`. Chiến lược chia đệ quy ưu tiên ranh giới đoạn/dòng trước khi cắt nhỏ, phù hợp tài liệu chính sách có cấu trúc.
-- **Policy-section:** `max_chunk_size=700`. Chiến lược tùy biến bám theo mục/điều của văn bản chính sách; số chunk cao hơn nhưng mỗi chunk có ý nghĩa nghiệp vụ rõ hơn.
+**Thành viên 2 — Nguyễn Thị Thanh Hiền**
+- **Loại chiến lược:** FixedSize (Fixed-large)
+- **Mô tả & lý do chọn:** Dùng `chunk_size=800`, `overlap=120`. Chunk lớn giữ nhiều bối cảnh và giảm số chunk, nhưng có thể đưa thêm nội dung không liên quan vào kết quả.
+- **Code snippet (nếu custom):** Không sử dụng chiến lược custom.
+
+**Thành viên 3 — Đỗ Thành Đạt**
+- **Loại chiến lược:** Sentence (Sentence-4)
+- **Mô tả & lý do chọn:** Chia tối đa 4 câu/chunk nhằm giữ ranh giới ngôn ngữ tự nhiên. Cấu hình cho kết quả top-1 ổn định trên cả 5 câu hỏi với số chunk thấp hơn Fixed-small.
+- **Code snippet (nếu custom):** Không sử dụng chiến lược custom.
+
+**Thành viên 4 — Trần Thị Hường**
+- **Loại chiến lược:** Recursive (Recursive-700)
+- **Mô tả & lý do chọn:** Dùng `chunk_size=700`. Chiến lược chia đệ quy ưu tiên ranh giới đoạn và dòng trước khi cắt nhỏ, phù hợp với tài liệu chính sách có cấu trúc.
+- **Code snippet (nếu custom):** Không sử dụng chiến lược custom.
+
+**Thành viên 5 — Nguyễn Thành Công**
+- **Loại chiến lược:** Custom (Policy-section)
+- **Mô tả & lý do chọn:** Dùng `max_chunk_size=700`. Chiến lược tùy biến bám theo mục và điều của văn bản chính sách, giúp mỗi chunk giữ được ý nghĩa nghiệp vụ rõ ràng.
+- **Code snippet (nếu custom):** Xem phần triển khai chiến lược `Policy-section` trong mã nguồn của nhóm.
 
 ### So Sánh Giữa Các Thành Viên
 
 | Thành viên | Chiến lược (Strategy) | Điểm truy xuất (/10) | Điểm mạnh | Điểm yếu |
 |-----------|----------|----------------------|-----------|----------|
-| Cấu hình 1 | Fixed-small (400, overlap 50) | 10 | Cả 5 câu đều đưa tài liệu liên quan lên top-1; cân bằng tốt giữa độ chính xác và ngữ cảnh | 439 chunk, chi phí lập chỉ mục cao hơn các cấu hình chunk lớn |
-| Cấu hình 2 | Fixed-large (800, overlap 120) | 10 | Ít chunk nhất (228), giữ được bối cảnh rộng | Câu 1 đúng ở hạng 3, câu 2 ở hạng 2; top-1 dễ chứa nội dung nhiễu |
-| Cấu hình 3 | Sentence-4 | 10 | Cả 5 câu đúng ở top-1; ranh giới chunk tự nhiên | Độ dài chunk biến thiên và có thể lớn với câu/danh sách dài |
-| Cấu hình 4 | Recursive-700 | 10 | 4/5 câu đúng ở top-1; số chunk vừa phải (298) | Câu 1 chỉ ở hạng 2 |
-| Cấu hình 5 | Policy-section (custom) | 10 | 4/5 câu đúng ở top-1; bảo toàn cấu trúc điều/mục | Nhiều chunk nhất (553); câu 2 chỉ ở hạng 2 |
+| 1 | Fixed-small (400, overlap 50) | 10 | Cả 5 câu đều đưa tài liệu liên quan lên top-1; cân bằng tốt giữa độ chính xác và ngữ cảnh | 439 chunk, chi phí lập chỉ mục cao hơn các cấu hình chunk lớn |
+| 2 | Fixed-large (800, overlap 120) | 10 | Ít chunk nhất (228), giữ được bối cảnh rộng | Câu 1 đúng ở hạng 3, câu 2 ở hạng 2; top-1 dễ chứa nội dung nhiễu |
+| 3 | Sentence-4 | 10 | Cả 5 câu đúng ở top-1; ranh giới chunk tự nhiên | Độ dài chunk biến thiên và có thể lớn với câu/danh sách dài |
+| 4 | Recursive-700 | 10 | 4/5 câu đúng ở top-1; số chunk vừa phải (298) | Câu 1 chỉ ở hạng 2 |
+| 5 | Policy-section (custom) | 10 | 4/5 câu đúng ở top-1; bảo toàn cấu trúc điều/mục | Nhiều chunk nhất (553); câu 2 chỉ ở hạng 2 |
 
 **Chiến lược nào tốt nhất cho chủ đề này? Tại sao?**
-> `fixed-small` và `sentence-4` cùng đạt 10/10 và đưa tài liệu liên quan lên top-1 ở cả 5 câu. Nhóm chọn `sentence-4` là cấu hình tốt nhất về chất lượng vì giữ ranh giới câu tự nhiên với chỉ 263 chunk, ít hơn đáng kể so với 439 chunk của `fixed-small`; tuy nhiên `fixed-small` là lựa chọn an toàn hơn nếu corpus có nhiều danh sách hoặc dòng không kết thúc bằng dấu câu.
+> `fixed-small` và `sentence-4` cùng đạt 10/10 và đưa tài liệu liên quan lên top-1 ở cả 5 câu. Nhóm chọn `sentence-4` là cấu hình tốt nhất về chất lượng vì giữ ranh giới câu tự nhiên với chỉ 263 chunk, ít hơn đáng kể so với 439 chunk của `fixed-small`; tuy nhiên `fixed-small` an toàn hơn nếu corpus có nhiều danh sách hoặc dòng không kết thúc bằng dấu câu.
 
 ---
 
@@ -142,9 +139,7 @@ Các lần chạy trong `artifacts/` đại diện cho năm cấu hình được
 ## 4. Thuyết trình (Demo) & Bài học nhóm — Nhóm (5 điểm)
 
 **Những phân tích (insights) hay nhất nhóm sẽ trình bày:**
-> - Cả năm cấu hình đều đạt hit top-3 5/5 và điểm truy xuất 10/10, nhưng chất lượng xếp hạng khác nhau; chỉ `fixed-small` và `sentence-4` đạt top-1 cho cả năm câu.
-> - Chunk lớn nhất (`fixed-large`, trung bình 786,18 ký tự) có ít chunk nhất nhưng để tài liệu đúng của câu 1 xuống hạng 3 và câu 2 xuống hạng 2.
-> - Metadata theo vai trò khách hàng sửa trực tiếp kết quả top-1 sai ở câu 3 đối với hai cấu hình fixed-size.
+> Cả năm cấu hình đều đạt hit top-3 5/5 và điểm truy xuất 10/10, nhưng chất lượng xếp hạng khác nhau; chỉ `fixed-small` và `sentence-4` đạt top-1 cho cả năm câu. Chunk lớn nhất (`fixed-large`, trung bình 786,18 ký tự) có ít chunk nhất nhưng để tài liệu đúng của câu 1 xuống hạng 3 và câu 2 xuống hạng 2. Metadata theo vai trò khách hàng sửa trực tiếp kết quả top-1 sai ở câu 3 đối với hai cấu hình fixed-size.
 
 **Bài học rút ra khi so sánh trong nhóm:**
 > Cùng một corpus và embedding model, kích thước cũng như ranh giới chunk không làm thay đổi hit top-3 trong bộ benchmark nhỏ này nhưng ảnh hưởng rõ đến top-1 và lượng dữ liệu phải lập chỉ mục. Chunk quá lớn giữ được bối cảnh song trộn nhiều chủ đề, còn chia theo câu hoặc fixed-size nhỏ tạo biểu diễn tập trung hơn cho truy vấn chính sách cụ thể.
