@@ -1,0 +1,55 @@
+[
+  {
+    "id": "k4-q1-return-window",
+    "query": "Người mua có bao lâu để gửi yêu cầu trả hàng hoặc hoàn tiền sau khi đơn hàng được giao thành công?",
+    "gold_answer": "Thông thường, người mua có 15 ngày kể từ khi đơn hàng được cập nhật giao thành công. Riêng thực phẩm tươi sống và đông lạnh, thời hạn là 24 giờ.",
+    "relevant_doc_ids": [
+      "shopee-return-refund-policy"
+    ],
+    "metadata_filter": null
+  },
+  {
+    "id": "k4-q2-buyer-evidence",
+    "query": "Người mua bổ sung bằng chứng cho yêu cầu trả hàng hoặc hoàn tiền như thế nào?",
+    "gold_answer": "Người mua phải bổ sung bằng chứng đúng hạn theo thông báo của Shopee, bằng cách thêm hình ảnh hoặc video rồi gửi qua thông báo yêu cầu bổ sung hoặc mục Tôi > Trả hàng/Hoàn tiền của đơn hàng.",
+    "relevant_doc_ids": [
+      "shopee-return-review-process"
+    ],
+    "metadata_filter": {
+      "customer_role": "buyer"
+    }
+  },
+  {
+    "id": "k4-q3-seller-listing-images",
+    "query": "Người bán phải đáp ứng yêu cầu gì về hình ảnh thật khi đăng sản phẩm trên Shopee?",
+    "gold_answer": "Bài đăng phải có ít nhất một hình ảnh thật do chính người bán chụp và sản phẩm thật phải chiếm ít nhất 40% diện tích ảnh đó.",
+    "relevant_doc_ids": [
+      "shopee-product-listing-rules"
+    ],
+    "metadata_filter": {
+      "customer_role": "seller"
+    }
+  },
+  {
+    "id": "k4-q4-prohibited-listings",
+    "query": "Người bán không được đăng bán những nội dung hoặc sản phẩm nào trên Shopee?",
+    "gold_answer": "Người bán không được đăng nội dung hoặc hàng hóa vi phạm pháp luật và chính sách Shopee, bao gồm các nhóm bị cấm/hạn chế; bài đăng có nội dung phản động, khiêu dâm, bạo lực, xúc phạm hoặc thông tin rác cũng bị nghiêm cấm.",
+    "relevant_doc_ids": [
+      "shopee-product-listing-rules",
+      "shopee-prohibited-products"
+    ],
+    "metadata_filter": {
+      "customer_role": "seller"
+    }
+  },
+  {
+    "id": "k4-q5-return-shipping-cost",
+    "query": "Chi phí vận chuyển khi hoàn trả sản phẩm do bên nào chịu?",
+    "gold_answer": "Trách nhiệm phụ thuộc hình thức và nguyên nhân trả hàng. Người bán chịu phí trong các trường hợp Shopee chấp thuận mà không do lỗi người mua hoặc đơn vị vận chuyển và một số đơn giao không thành công. Người mua không phải trả trước khi dùng lấy hàng tại nhà hoặc gửi tại bưu cục; nếu tự sắp xếp thì người mua trả trước và có thể được Shopee hoàn hoặc hỗ trợ theo điều kiện áp dụng.",
+    "relevant_doc_ids": [
+      "shopee-return-refund-policy",
+      "shopee-return-shipping-fees"
+    ],
+    "metadata_filter": null
+  }
+]
